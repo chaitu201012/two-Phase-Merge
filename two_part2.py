@@ -272,7 +272,8 @@ def created_thread_sublists(input_file,main_size,thread_number):
     
     input_file_size=os.stat(input_file).st_size
     #partitions=(math.ceil(input_file_size/main_size))
-    partitions=thread_number
+    thread_size=math.ceil(main_size/thread_number)
+    partitions=math.ceil(input_file_size/thread_size)
 
     partition_size=math.floor(input_file_size/partitions)
 
@@ -286,8 +287,9 @@ def created_thread_sublists(input_file,main_size,thread_number):
         print("No of sublists are too many and main memory is not sufficient to hold them")
         exit()
     
-
-    tempfiles=tempFiles(thread_number)
+    #print(partitions)
+    #exit()
+    tempfiles=tempFiles(partitions)
     #filehandle=open(input_file,'r')
     counter=0
     read_lines=0
@@ -315,17 +317,29 @@ def created_thread_sublists(input_file,main_size,thread_number):
 
 
     bigfile.close()
-    threads=[0]*len(tempfiles)
-    thread_no=-1
+    
+    
+    file_count=0
+    while True:
+        if file_count==partitions:
+            break
+        thread_no=-1
+        threads=[0]*thread_number
+        
+        count=0
+        while count<thread_number:
+            
+            thread_no+=1
+            
+            print("**"*(7)+" sorting sublist "+str(file_count+1)+"**"*(7))
+            threads[thread_no]= threading.Thread(target=multithreadSort, args=(tempfiles[file_count],))
+            threads[thread_no].start()
+            count+=1
+            file_count+=1
 
-    for i in tempfiles:
-        thread_no+=1
-        print("**"*(7)+" sorting sublist "+str(thread_no)+"**"*(7))
-        threads[thread_no]= threading.Thread(target=multithreadSort, args=(i,))
-        threads[thread_no].start()
-
-    for j in threads:
-        j.join()
+        for j in threads:
+            j.join()
+        threads.clear()
 
     return partitions,tempfiles,total_lines
 
